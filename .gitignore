@@ -1,0 +1,11 @@
+# Survey response data — keep off public repo
+responses.csv
+emails.csv
+survey-responses.json
+survey-emails.json
+
+# Local server (not needed on GitHub Pages)
+server.js
+
+# Mac
+.DS_Store
