@@ -1463,26 +1463,20 @@
     }, 300);
   }
 
-  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxGYcX5vzkPCEWpHc4_5R7_YKAqTreMMGd5aS0vkAUwmJcyrjyESYp9p9MhGKa-SZze_w/exec';
-
-  async function postToSheet(payload) {
-    // Apps Script doesn't support CORS preflight, so we:
-    //   1. Omit Content-Type (avoids OPTIONS preflight)
-    //   2. Use mode: 'no-cors'  (fire-and-forget — request goes through, response is opaque)
+  async function post(endpoint, payload) {
     try {
-      await fetch(APPS_SCRIPT_URL, {
+      await fetch(endpoint, {
         method: 'POST',
-        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-    } catch { /* network unavailable — silently ignore */ }
+    } catch { /* server not running — silently ignore */ }
   }
 
   async function submitSurvey() {
-    // Capture open-ended answer from textarea
     const ta = document.getElementById('q13');
     if (ta && ta.value.trim()) answers['q13'] = ta.value.trim();
-    postToSheet({ type: 'response', timestamp: new Date().toISOString(), answers });
+    post('/api/submit', { answers });
   }
 
   async function submitEmail() {
@@ -1494,7 +1488,7 @@
     }
     const btn = document.getElementById('report-btn');
     if (btn) btn.textContent = 'Added to list ✓';
-    postToSheet({ type: 'email', email, timestamp: new Date().toISOString() });
+    post('/api/email', { email });
   }
 
   function nextSlide() {
