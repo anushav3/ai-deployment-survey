@@ -1478,7 +1478,7 @@
       });
       const data = await r.json();
       const el = document.getElementById('response-counter');
-      if (el) el.textContent = data.ok ? `Response saved ✓ (${data.total} total)` : 'Save failed';
+      if (el) el.textContent = data.ok ? 'Response saved ✓' : 'Save failed';
     } catch(e) { console.error('Save failed:', e); }
   }
 

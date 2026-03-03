@@ -15,6 +15,7 @@
 | `api/submit.js` | Vercel serverless function — POST /api/submit → saves response as `responses/{id}.json` in Blob |
 | `api/email.js` | Vercel serverless function — POST /api/email → saves email as `emails/{id}.json` in Blob |
 | `api/count.js` | Vercel serverless function — GET /api/count → lists `responses/` prefix in Blob |
+| `api/export.js` | Vercel serverless function — GET /api/export → downloads all responses as `survey-responses.csv` (Excel-ready, UTF-8 BOM) |
 | `survey-responses.json` | Legacy — from a previous storage approach, no longer written to |
 | `survey-emails.json` | Legacy — from a previous storage approach |
 | `responses.csv` | Local response storage (written by `server.js`) |
