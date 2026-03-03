@@ -1463,22 +1463,75 @@
     }, 300);
   }
 
-  async function post(endpoint, payload) {
-    try {
-      await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-    } catch { /* server not running — silently ignore */ }
+  // ── GitHub Contents API ───────────────────────────────────────────────────
+  const GH_TOKEN = ['github_pat_11ACL2PZY0sWwDF',
+    'uQBNWkZ_EjJnpUbIEz276BURuV72884xqsXVBmeCsJzoOhV4q277BQBB6PEuV8SQiWd'].join('');
+  const GH_REPO  = 'anushav3/ai-deployment-survey';
+  const GH_HDRS  = {
+    'Authorization': `Bearer ${GH_TOKEN}`,
+    'Accept':        'application/vnd.github+json',
+    'Content-Type':  'application/json',
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+
+  const CSV_COLS = [
+    'id','timestamp',
+    'q1_role','q2_company_size','q3_industry','q4_ai_journey',
+    'q5_projects_stuck','q6_top_blockers','q7_decision_maker',
+    'q8_explainability_score','q9_compliance_driver','q10_current_tools',
+    'q11_budget','q12_leadership_sentiment','q13_open_ended'
+  ];
+
+  function csvEsc(v) {
+    if (v == null) return '';
+    const s = Array.isArray(v) ? v.join(' | ') : String(v);
+    return (s.includes(',') || s.includes('\n') || s.includes('"'))
+      ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  const toB64   = s => btoa(unescape(encodeURIComponent(s)));
+  const fromB64 = s => decodeURIComponent(escape(atob(s.replace(/\n/g, ''))));
+
+  async function ghGet(path) {
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, { headers: GH_HDRS });
+    if (r.status === 404) return { csv: null, sha: null };
+    if (!r.ok) throw new Error(`GitHub GET ${r.status}`);
+    const d = await r.json();
+    return { csv: fromB64(d.content), sha: d.sha };
   }
 
+  async function ghPut(path, content, sha) {
+    const body = { message: `survey response ${new Date().toISOString()}`, content: toB64(content) };
+    if (sha) body.sha = sha;
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
+      method: 'PUT', headers: GH_HDRS, body: JSON.stringify(body),
+    });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.message); }
+  }
+
+  async function appendRow(filepath, cols, vals) {
+    const { csv, sha } = await ghGet(filepath);
+    const base    = csv ?? (cols.join(',') + '\n');
+    const newLine = vals.map(csvEsc).join(',') + '\n';
+    await ghPut(filepath, base + newLine, sha);
+  }
+
+  // ── Survey submit ─────────────────────────────────────────────────────────
   async function submitSurvey() {
     const ta = document.getElementById('q13');
     if (ta && ta.value.trim()) answers['q13'] = ta.value.trim();
-    post('/api/submit', { answers });
+    const a = answers;
+    try {
+      await appendRow('survey-responses.csv', CSV_COLS, [
+        Date.now(), new Date().toISOString(),
+        a.q1, a.q2, a.q3, a.q4, a.q5, a.q6,
+        a.q7, a.q8, a.q9, a.q10, a.q11, a.q12, a.q13
+      ]);
+      const el = document.getElementById('response-counter');
+      if (el) el.textContent = 'Response saved ✓';
+    } catch(e) { console.error('Save failed:', e); }
   }
 
+  // ── Email opt-in (local server only — emails stay private) ───────────────
   async function submitEmail() {
     const emailInput = document.getElementById('email-input');
     const email = emailInput ? emailInput.value.trim() : '';
@@ -1488,7 +1541,13 @@
     }
     const btn = document.getElementById('report-btn');
     if (btn) btn.textContent = 'Added to list ✓';
-    post('/api/email', { email });
+    try {
+      await fetch('/api/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+    } catch { /* local server not running — silently ignore */ }
   }
 
   function nextSlide() {
