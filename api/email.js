@@ -21,7 +21,7 @@ module.exports = async function handler(req, res) {
 
     // Each email stored as its own file
     await put(`emails/${Date.now()}.json`, JSON.stringify(entry, null, 2), {
-      access: 'private',
+      access: 'public',
       contentType: 'application/json',
     });
 
