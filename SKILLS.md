@@ -9,8 +9,7 @@
 ### Survey Files
 | File | Purpose |
 |---|---|
-| `ai-deployment-survey.html` | Main multi-step survey form (13 questions, custom JS/CSS) |
-| `index.html` | Landing page, also serves the survey on GitHub Pages root |
+| `index.html` | **Single source of truth** — full multi-step survey form (13 questions, custom JS/CSS). Served at root by both GitHub Pages and Vercel. **Always edit only this file.** |
 | `server.js` | Local Node.js server — saves responses to `responses.csv`, emails to `emails.csv` |
 | `package.json` | Node.js project manifest, declares `@vercel/blob` dependency |
 | `api/submit.js` | Vercel serverless function — POST /api/submit → saves response as `responses/{id}.json` in Blob |
@@ -20,11 +19,14 @@
 | `survey-emails.json` | Legacy — from a previous storage approach |
 | `responses.csv` | Local response storage (written by `server.js`) |
 
+> ⚠️ **Rule: Always edit only `index.html`.**
+> `ai-deployment-survey.html` was a duplicate that caused a bug — submissions were blank because only one file was being kept up to date while the other (served at the root) was stale. The duplicate has been deleted. There is now one HTML file.
+
 ### Deployment
 - **Frontend:** GitHub Pages → `https://anushav3.github.io/ai-deployment-survey/`
 - **CI/CD:** `.github/workflows/static.yml` — deploys on push to `main`
 - **Backend (local only):** `node server.js` → `http://localhost:3000`
-- **Backend (Vercel — in progress):** `api/*.js` serverless functions + Vercel Blob storage
+- **Backend (Vercel — live):** `https://ai-deployment-survey.vercel.app` — `api/*.js` serverless functions + Vercel Blob (public store)
 
 ---
 
@@ -35,7 +37,7 @@
 - Required a GitHub PAT hardcoded in the client-side HTML
 - Token was publicly visible to anyone who viewed page source
 - **Only works on public repos** — private repo requires a paid GitHub plan
-- **Removed:** PAT revoked, all GitHub API code stripped from `ai-deployment-survey.html`
+- **Removed:** PAT revoked, all GitHub API code stripped from `index.html`
 
 ### ❌ Google Apps Script web app
 - Attempted as a serverless backend to receive POST requests and write to Google Sheets
@@ -56,7 +58,7 @@ Need a free, always-on host so the deployed survey can save responses publicly.
 ### Options evaluated
 | Option | Status | Notes |
 |---|---|---|
-| **Vercel** | 🔄 In progress | Serverless functions in `/api/*.js`, Vercel Blob for storage. Each response = one JSON file. KV deprecated — do not use. |
+| **Vercel** | ✅ Working | Serverless functions in `/api/*.js`, Vercel Blob (public store) for storage. Each response = one JSON file in `responses/` folder. |
 | **Render** | Not tried | Free Node.js hosting, filesystem is ephemeral (CSV resets on redeploy) |
 | **Railway** | Not tried | Free $5/month credit, same ephemeral filesystem caveat |
 | **Fly.io** | Not tried | Generous free tier |
@@ -64,15 +66,14 @@ Need a free, always-on host so the deployed survey can save responses publicly.
 | **Formspree** | Not tried | No server needed, POSTs from static HTML, free 50/month |
 | **Tally.so** | Not tried | Replaces custom form entirely, free unlimited responses |
 
-### Vercel setup — remaining steps
-1. Sign up at vercel.com with GitHub account
-2. Import repo `anushav3/ai-deployment-survey`
-3. In Vercel dashboard → **Storage** → **Blob** → create a store, connect to project
-4. Vercel auto-injects `BLOB_READ_WRITE_TOKEN` env var
-5. Push `package.json` + `api/` folder → Vercel auto-deploys
-6. Test: POST to `https://your-project.vercel.app/api/submit`
-7. View responses: Vercel dashboard → Storage → Blob → browse `responses/` folder
+### Vercel setup — complete ✅
+- Blob store: `ai-deployment-survey-blob` (Public) — store ID `store_yJUOdLaf7O5sOPvv`
+- Responses viewable: Vercel dashboard → Storage → Blob → `responses/` folder
+- Survey URL: `https://ai-deployment-survey.vercel.app`
 
-### ❌ Vercel KV — deprecated, not available
+### ❌ Vercel KV — deprecated, do not use
 - Vercel removed native KV storage in late 2024
-- Do not attempt to use `@vercel/kv` — it will not work
+
+### ❌ Vercel Blob private store — do not use
+- Private store cannot use `access: 'public'` and does not support `access: 'private'` in `@vercel/blob` v0.27
+- Always create blob store as **Public** at creation time — cannot be changed after
