@@ -3,8 +3,12 @@ const { list } = require('@vercel/blob');
 const HEADERS = [
   'id', 'timestamp', 'name', 'email',
   'q1_role', 'q2_company_size', 'q3_industry', 'q4_ai_journey',
-  'q5_projects_stuck', 'q6_top_blockers', 'q7_decision_maker',
-  'q8_explainability_score', 'q9_compliance_driver', 'q10_current_tools',
+  'q5_projects_stuck',
+  'q6_blocker_1', 'q6_blocker_2', 'q6_blocker_3',
+  'q7_decision_maker',
+  'q8_testing_method',
+  'q9_compliance_driver',
+  'q10_tool_1', 'q10_tool_2', 'q10_tool_3', 'q10_tool_4', 'q10_tool_5', 'q10_tool_6',
   'q11_budget', 'q12_leadership_sentiment', 'q13_open_ended',
 ];
 
@@ -74,11 +78,18 @@ module.exports = async function handler(req, res) {
         q3_industry:             a.q3,
         q4_ai_journey:           a.q4,
         q5_projects_stuck:       a.q5,
-        q6_top_blockers:         a.q6,   // array → joined with " | "
+        q6_blocker_1:            Array.isArray(a.q6) ? a.q6[0] : a.q6,
+        q6_blocker_2:            Array.isArray(a.q6) ? a.q6[1] : undefined,
+        q6_blocker_3:            Array.isArray(a.q6) ? a.q6[2] : undefined,
         q7_decision_maker:       a.q7,
-        q8_explainability_score: a.q8,
+        q8_testing_method:       a.q8,
         q9_compliance_driver:    a.q9,
-        q10_current_tools:       a.q10,  // array → joined with " | "
+        q10_tool_1:              Array.isArray(a.q10) ? a.q10[0] : a.q10,
+        q10_tool_2:              Array.isArray(a.q10) ? a.q10[1] : undefined,
+        q10_tool_3:              Array.isArray(a.q10) ? a.q10[2] : undefined,
+        q10_tool_4:              Array.isArray(a.q10) ? a.q10[3] : undefined,
+        q10_tool_5:              Array.isArray(a.q10) ? a.q10[4] : undefined,
+        q10_tool_6:              Array.isArray(a.q10) ? a.q10[5] : undefined,
         q11_budget:              a.q11,
         q12_leadership_sentiment:a.q12,
         q13_open_ended:          a.q13,

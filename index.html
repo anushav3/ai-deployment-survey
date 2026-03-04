@@ -1091,29 +1091,38 @@
   <div class="slide" id="slide-8">
     <div style="position:relative">
       <div class="big-num">08</div>
-      <div class="q-label">Question 8 of 13 · Explainability</div>
-      <div class="q-text">How confident are you that you could explain <em>any</em> AI decision to a regulator today?</div>
-      <div class="q-sub">0 = completely unable · 10 = fully confident</div>
-      <div class="scale-wrap" id="q8">
-        <div class="scale-option" onclick="selectScale('q8', this)">0</div>
-        <div class="scale-option" onclick="selectScale('q8', this)">1</div>
-        <div class="scale-option" onclick="selectScale('q8', this)">2</div>
-        <div class="scale-option" onclick="selectScale('q8', this)">3</div>
-        <div class="scale-option" onclick="selectScale('q8', this)">4</div>
-        <div class="scale-option" onclick="selectScale('q8', this)">5</div>
-        <div class="scale-option" onclick="selectScale('q8', this)">6</div>
-        <div class="scale-option" onclick="selectScale('q8', this)">7</div>
-        <div class="scale-option" onclick="selectScale('q8', this)">8</div>
-        <div class="scale-option" onclick="selectScale('q8', this)">9</div>
-        <div class="scale-option" onclick="selectScale('q8', this)">10</div>
+      <div class="q-label">Question 8 of 13 · Testing</div>
+      <div class="q-text">How do you test your AI before <em>shipping to production?</em></div>
+      <div class="options-list" id="q8">
+        <div class="option" onclick="selectSingle('q8', this)">
+          <div class="option-key">A</div>
+          <div class="option-text">Synthetic / generated test data</div>
+        </div>
+        <div class="option" onclick="selectSingle('q8', this)">
+          <div class="option-key">B</div>
+          <div class="option-text">In-house manually labelled datasets</div>
+        </div>
+        <div class="option" onclick="selectSingle('q8', this)">
+          <div class="option-key">C</div>
+          <div class="option-text">Real user data in a staging environment</div>
+        </div>
+        <div class="option" onclick="selectSingle('q8', this)">
+          <div class="option-key">D</div>
+          <div class="option-text">A/B testing or canary releases in production</div>
+        </div>
+        <div class="option" onclick="selectSingle('q8', this)">
+          <div class="option-key">E</div>
+          <div class="option-text">Red-teaming / adversarial prompt testing</div>
+        </div>
+        <div class="option" onclick="selectSingle('q8', this)">
+          <div class="option-key">F</div>
+          <div class="option-text">External QA or third-party evaluation</div>
+        </div>
+        <div class="option" onclick="selectSingle('q8', this)">
+          <div class="option-key">G</div>
+          <div class="option-text">Winging it — no formal testing process yet</div>
+        </div>
       </div>
-      <div style="display:flex; justify-content:space-between; margin-top:8px; max-width:480px;">
-        <span class="scale-label">Not at all confident</span>
-        <span class="scale-label">Fully confident</span>
-      </div>
-      <button class="btn-next" onclick="nextSlide()">
-        Next <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
-      </button>
     </div>
   </div>
 
@@ -1824,7 +1833,7 @@
     }
     if (e.key === 'ArrowUp') { e.preventDefault(); prevSlide(); }
     // Letter shortcuts for single-select option slides (excludes Q9 — now multi)
-    if ([2, 3, 4, 5, 7, 11, 12].includes(current)) {
+    if ([2, 3, 4, 5, 7, 8, 11, 12].includes(current)) {
       const keys = ['a','b','c','d','e','f'];
       const idx = keys.indexOf(e.key.toLowerCase());
       if (idx >= 0) {
