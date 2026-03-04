@@ -8,6 +8,20 @@ const HEADERS = [
   'q11_budget', 'q12_leadership_sentiment', 'q13_open_ended',
 ];
 
+function friendlyTimestamp(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleString('en-US', {
+    timeZone: 'America/Los_Angeles',
+    month:  'short',
+    day:    'numeric',
+    year:   'numeric',
+    hour:   'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZoneName: 'short',
+  });
+}
+
 function csvEscape(val) {
   if (val === null || val === undefined) return '';
   const str = Array.isArray(val) ? val.join(' | ') : String(val);
@@ -52,7 +66,7 @@ module.exports = async function handler(req, res) {
       const a = entry.answers || {};
       const row = {
         id:                      entry.id,
-        timestamp:               entry.timestamp,
+        timestamp:               friendlyTimestamp(entry.timestamp),
         name:                    a.name,
         email:                   a.email,
         q1_role:                 a.q1,
