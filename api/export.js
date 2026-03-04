@@ -18,7 +18,11 @@ function csvEscape(val) {
 }
 
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // ── Auth: require ?token=EXPORT_TOKEN ──────────────────────────────────
+  const secret = process.env.EXPORT_TOKEN;
+  if (!secret || req.query.token !== secret) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -32,10 +36,12 @@ module.exports = async function handler(req, res) {
       return res.status(200).send('\uFEFF' + HEADERS.join(',') + '\n');
     }
 
-    // Fetch each blob and parse JSON (they are public URLs)
+    // Fetch each blob — private, so authenticate with the store token
     const rows = await Promise.all(
       blobs.map(async (blob) => {
-        const r = await fetch(blob.url);
+        const r = await fetch(blob.url, {
+          headers: { Authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}` },
+        });
         return r.json();
       })
     );
