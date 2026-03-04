@@ -36,12 +36,10 @@ module.exports = async function handler(req, res) {
       return res.status(200).send('\uFEFF' + HEADERS.join(',') + '\n');
     }
 
-    // Fetch each blob — private, so authenticate with the store token
+    // Fetch each blob (public store — URLs are non-guessable by design)
     const rows = await Promise.all(
       blobs.map(async (blob) => {
-        const r = await fetch(blob.url, {
-          headers: { Authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}` },
-        });
+        const r = await fetch(blob.url);
         return r.json();
       })
     );

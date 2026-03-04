@@ -21,7 +21,7 @@ module.exports = async function handler(req, res) {
 
     // Each response stored as its own file — no race conditions
     await put(`responses/${id}.json`, JSON.stringify(entry, null, 2), {
-      access: 'private',
+      access: 'public',
       contentType: 'application/json',
     });
 
