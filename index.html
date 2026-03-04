@@ -1642,7 +1642,20 @@
     }
     if (slideNum === 14) {
       const emailEl = document.getElementById('email-input');
-      const emailOk = emailEl && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailEl.value.trim());
+      const val = emailEl ? emailEl.value.trim() : '';
+      const validFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+      const PERSONAL_DOMAINS = new Set([
+        'gmail.com','googlemail.com',
+        'yahoo.com','yahoo.co.uk','yahoo.fr','yahoo.ca','yahoo.com.au','ymail.com',
+        'hotmail.com','hotmail.co.uk','hotmail.fr','hotmail.ca',
+        'outlook.com','live.com','live.co.uk','msn.com',
+        'aol.com','aim.com',
+        'icloud.com','me.com','mac.com',
+        'protonmail.com','pm.me',
+        'mail.com',
+      ]);
+      const domain = val.split('@')[1]?.toLowerCase() || '';
+      const emailOk = validFormat && !PERSONAL_DOMAINS.has(domain);
       if (!emailOk && emailEl) emailEl.style.borderColor = 'var(--accent2)';
       return emailOk;
     }
@@ -1674,7 +1687,7 @@
     if (!hasAnswer(current)) {
       let msg = 'Please make a selection to continue';
       if (current === 13) msg = 'Please describe your experience to continue';
-      if (current === 14) msg = 'Please enter a valid work email to continue';
+      if (current === 14) msg = 'Please use a work email — Gmail, Yahoo & Hotmail are not accepted';
       showError(msg);
       return;
     }
