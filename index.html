@@ -1486,7 +1486,7 @@
       <div class="q-text">Almost done — <em>who are you?</em></div>
       <div class="q-sub">Your response will be attributed to you and kept confidential — used for research purposes only.</div>
       <div class="input-group">
-        <label class="input-label" for="name-input">Full name *</label>
+        <label class="input-label" for="name-input">Full name <span style="color:var(--muted);font-size:0.8em">(optional)</span></label>
         <input type="text" id="name-input" class="text-input" placeholder="Jane Smith"
                oninput="this.style.borderColor=''"
                style="max-width:420px; display:block;">
@@ -1612,13 +1612,10 @@
       return ok;
     }
     if (slideNum === 14) {
-      const nameEl = document.getElementById('name-input');
       const emailEl = document.getElementById('email-input');
-      const nameOk = nameEl && nameEl.value.trim().length > 0;
       const emailOk = emailEl && emailEl.value.trim().length > 0 && emailEl.value.includes('@');
-      if (!nameOk && nameEl) nameEl.style.borderColor = 'var(--accent2)';
       if (!emailOk && emailEl) emailEl.style.borderColor = 'var(--accent2)';
-      return nameOk && emailOk;
+      return emailOk;
     }
     const qId = 'q' + slideNum;
     const val = answers[qId];
@@ -1648,7 +1645,7 @@
     if (!hasAnswer(current)) {
       let msg = 'Please make a selection to continue';
       if (current === 13) msg = 'Please describe your experience to continue';
-      if (current === 14) msg = 'Please fill in your name and a valid email';
+      if (current === 14) msg = 'Please enter a valid work email to continue';
       showError(msg);
       return;
     }
