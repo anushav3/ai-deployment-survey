@@ -1093,40 +1093,48 @@
       <div class="big-num">08</div>
       <div class="q-label">Question 8 of 13 · Testing</div>
       <div class="q-text">How do you test your AI before <em>shipping to production?</em></div>
-      <div class="options-list" id="q8">
-        <div class="option" onclick="selectSingle('q8', this)">
+      <div class="q-sub">Select all that apply.</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="multi-hint" style="margin-bottom:0">✓ Select all that apply</div>
+        <span id="q8-badge" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);transition:color 0.2s;">0 selected</span>
+      </div>
+      <div class="options" id="q8">
+        <div class="option" onclick="selectMulti('q8', this, 99)">
           <div class="option-key">A</div>
           <div class="option-text">Synthetic / generated test data</div>
         </div>
-        <div class="option" onclick="selectSingle('q8', this)">
+        <div class="option" onclick="selectMulti('q8', this, 99)">
           <div class="option-key">B</div>
           <div class="option-text">In-house manually labelled datasets</div>
         </div>
-        <div class="option" onclick="selectSingle('q8', this)">
+        <div class="option" onclick="selectMulti('q8', this, 99)">
           <div class="option-key">C</div>
           <div class="option-text">Real user data in a staging environment</div>
         </div>
-        <div class="option" onclick="selectSingle('q8', this)">
+        <div class="option" onclick="selectMulti('q8', this, 99)">
           <div class="option-key">D</div>
           <div class="option-text">A/B testing or canary releases in production</div>
         </div>
-        <div class="option" onclick="selectSingle('q8', this)">
+        <div class="option" onclick="selectMulti('q8', this, 99)">
           <div class="option-key">E</div>
           <div class="option-text">Red-teaming / adversarial prompt testing</div>
         </div>
-        <div class="option" onclick="selectSingle('q8', this)">
+        <div class="option" onclick="selectMulti('q8', this, 99)">
           <div class="option-key">F</div>
           <div class="option-text">External QA or third-party evaluation</div>
         </div>
-        <div class="option" onclick="selectSingle('q8', this)">
+        <div class="option" onclick="selectMulti('q8', this, 99)">
           <div class="option-key">G</div>
           <div class="option-text">LLM-as-a-judge / automated AI evaluation</div>
         </div>
-        <div class="option" onclick="selectSingle('q8', this)">
+        <div class="option" onclick="selectMulti('q8', this, 99)">
           <div class="option-key">H</div>
           <div class="option-text">Winging it — no formal testing process yet</div>
         </div>
       </div>
+      <button class="btn-next" onclick="nextSlide()">
+        Next <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+      </button>
     </div>
   </div>
 
@@ -1837,7 +1845,7 @@
     }
     if (e.key === 'ArrowUp') { e.preventDefault(); prevSlide(); }
     // Letter shortcuts for single-select option slides (excludes Q9 — now multi)
-    if ([2, 3, 4, 5, 7, 8, 11, 12].includes(current)) {
+    if ([2, 3, 4, 5, 7, 11, 12].includes(current)) {
       const keys = ['a','b','c','d','e','f'];
       const idx = keys.indexOf(e.key.toLowerCase());
       if (idx >= 0) {
