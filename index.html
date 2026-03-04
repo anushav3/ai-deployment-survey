@@ -628,6 +628,71 @@
   .options-scroll::-webkit-scrollbar-track { background: transparent; }
   .options-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 
+  /* Drag-and-drop selection tray */
+  .selection-tray {
+    border: 1px dashed rgba(232,255,71,0.25);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    transition: all 0.2s;
+    background: rgba(232,255,71,0.02);
+  }
+  .selection-tray.drag-over { border-color: var(--accent); background: rgba(232,255,71,0.07); }
+  .tray-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.75;
+    margin-bottom: 8px;
+  }
+  .tray-items { display: flex; flex-wrap: wrap; gap: 8px; min-height: 32px; align-items: center; }
+  .tray-empty-hint {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    opacity: 0.5;
+    letter-spacing: 0.05em;
+  }
+  .tray-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    background: rgba(232,255,71,0.1);
+    border: 1px solid rgba(232,255,71,0.25);
+    border-radius: 6px;
+    font-size: 12px;
+    max-width: 300px;
+    animation: pop 0.2s ease;
+  }
+  .tray-tag-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tray-tag-remove { cursor: pointer; color: var(--muted); font-size: 16px; line-height: 1; flex-shrink: 0; transition: color 0.15s; }
+  .tray-tag-remove:hover { color: var(--accent2); }
+  .option[draggable="true"] { cursor: grab; }
+  .option[draggable="true"]:active { cursor: grabbing; }
+
+  /* Mandatory validation */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-5px); }
+    40%, 80% { transform: translateX(5px); }
+  }
+  .btn-shake { animation: shake 0.35s ease; }
+
+  /* Name / Email slide */
+  .input-group { margin-bottom: 24px; }
+  .input-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+    display: block;
+  }
+
   @media (max-width: 600px) {
     .nav { padding: 16px 20px; }
     .nav-arrows { right: 20px; bottom: 24px; }
@@ -674,12 +739,12 @@
           <div class="stat-label">POCs never ship</div>
         </div>
         <div class="stat">
-          <div class="stat-num">14</div>
+          <div class="stat-num">13</div>
           <div class="stat-label">Questions</div>
         </div>
         <div class="stat">
           <div class="stat-num">100%</div>
-          <div class="stat-label">Anonymous</div>
+          <div class="stat-label">Confidential</div>
         </div>
       </div>
       <button class="btn-next" onclick="nextSlide()">
@@ -758,11 +823,11 @@
       <div class="q-label">Question 3 of 13 · Context</div>
       <div class="q-text">What <em>industry</em> are you in?</div>
       <div class="chips" id="q3">
+        <div class="chip" onclick="selectChip('q3', this)">💻 SaaS / Tech</div>
         <div class="chip" onclick="selectChip('q3', this)">🏦 Fintech / Banking</div>
         <div class="chip" onclick="selectChip('q3', this)">🏥 Healthcare</div>
         <div class="chip" onclick="selectChip('q3', this)">🛍️ Retail / E-commerce</div>
         <div class="chip" onclick="selectChip('q3', this)">🏭 Manufacturing</div>
-        <div class="chip" onclick="selectChip('q3', this)">💻 SaaS / Tech</div>
         <div class="chip" onclick="selectChip('q3', this)">💳 Payments</div>
         <div class="chip" onclick="selectChip('q3', this)">🏛️ Insurance</div>
         <div class="chip" onclick="selectChip('q3', this)">🎓 Education</div>
@@ -851,6 +916,15 @@
       <div class="q-label">Question 6 of 13 · Core Blockers</div>
       <div class="q-text">What are your <em>top 3 blockers</em> to production?</div>
       <div class="q-sub">Select up to 3. We want the real ones, not the polite ones.</div>
+      <div class="selection-tray" id="q6-tray"
+           ondragover="event.preventDefault(); document.getElementById('q6-tray').classList.add('drag-over');"
+           ondragleave="document.getElementById('q6-tray').classList.remove('drag-over');"
+           ondrop="onTrayDrop(event,'q6',3)">
+        <div class="tray-label">✦ Your top 3 blockers — drag or click to select</div>
+        <div class="tray-items" id="q6-tray-items">
+          <span class="tray-empty-hint" id="q6-empty-hint">Drag items here or click below to add</span>
+        </div>
+      </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div class="multi-hint" style="margin-bottom:0">✓ Select up to 3</div>
         <span id="q6-badge" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);transition:color 0.2s;">0 / 3 selected</span>
@@ -861,15 +935,15 @@
         <div class="option-group">
           <span class="option-group-label security">🔴 Security &amp; Vulnerabilities</span>
           <div class="options">
-            <div class="option" onclick="selectMulti('q6', this, 3)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q6',3)" ondragend="onDragEnd(event)" onclick="clickToSelect('q6',this,3)">
               <div class="option-emoji">🔒</div>
               <div class="option-text">Model vulnerability — prompt injection, jailbreaks, adversarial inputs</div>
             </div>
-            <div class="option" onclick="selectMulti('q6', this, 3)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q6',3)" ondragend="onDragEnd(event)" onclick="clickToSelect('q6',this,3)">
               <div class="option-emoji">🧬</div>
               <div class="option-text">Training data poisoning or supply chain risk</div>
             </div>
-            <div class="option" onclick="selectMulti('q6', this, 3)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q6',3)" ondragend="onDragEnd(event)" onclick="clickToSelect('q6',this,3)">
               <div class="option-emoji">🕵️</div>
               <div class="option-text">No way to red-team or pentest AI systems before launch</div>
             </div>
@@ -880,15 +954,15 @@
         <div class="option-group">
           <span class="option-group-label trust">🔵 Trust &amp; Explainability</span>
           <div class="options">
-            <div class="option" onclick="selectMulti('q6', this, 3)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q6',3)" ondragend="onDragEnd(event)" onclick="clickToSelect('q6',this,3)">
               <div class="option-emoji">🧩</div>
               <div class="option-text">Can't explain AI decisions to stakeholders or customers</div>
             </div>
-            <div class="option" onclick="selectMulti('q6', this, 3)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q6',3)" ondragend="onDragEnd(event)" onclick="clickToSelect('q6',this,3)">
               <div class="option-emoji">🎲</div>
               <div class="option-text">Model behavior is unpredictable / non-deterministic</div>
             </div>
-            <div class="option" onclick="selectMulti('q6', this, 3)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q6',3)" ondragend="onDragEnd(event)" onclick="clickToSelect('q6',this,3)">
               <div class="option-emoji">📡</div>
               <div class="option-text">No monitoring or observability for model drift in production</div>
             </div>
@@ -899,15 +973,15 @@
         <div class="option-group">
           <span class="option-group-label" style="border-color:#f59e0b;color:#f59e0b;opacity:0.8;">🟡 Compliance &amp; Legal</span>
           <div class="options">
-            <div class="option" onclick="selectMulti('q6', this, 3)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q6',3)" ondragend="onDragEnd(event)" onclick="clickToSelect('q6',this,3)">
               <div class="option-emoji">📋</div>
               <div class="option-text">Regulatory uncertainty — EU AI Act, GDPR, HIPAA, SOC2</div>
             </div>
-            <div class="option" onclick="selectMulti('q6', this, 3)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q6',3)" ondragend="onDragEnd(event)" onclick="clickToSelect('q6',this,3)">
               <div class="option-emoji">⚖️</div>
               <div class="option-text">Legal liability — who's responsible when AI makes a mistake?</div>
             </div>
-            <div class="option" onclick="selectMulti('q6', this, 3)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q6',3)" ondragend="onDragEnd(event)" onclick="clickToSelect('q6',this,3)">
               <div class="option-emoji">📊</div>
               <div class="option-text">Data governance — PII exposure, consent, lineage gaps</div>
             </div>
@@ -918,15 +992,15 @@
         <div class="option-group">
           <span class="option-group-label org">🟣 Organizational &amp; Cultural</span>
           <div class="options">
-            <div class="option" onclick="selectMulti('q6', this, 3)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q6',3)" ondragend="onDragEnd(event)" onclick="clickToSelect('q6',this,3)">
               <div class="option-emoji">🏢</div>
               <div class="option-text">No executive buy-in or leadership fear of AI failures</div>
             </div>
-            <div class="option" onclick="selectMulti('q6', this, 3)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q6',3)" ondragend="onDragEnd(event)" onclick="clickToSelect('q6',this,3)">
               <div class="option-emoji">👥</div>
               <div class="option-text">Talent gap — no MLOps, AI security, or governance expertise in-house</div>
             </div>
-            <div class="option" onclick="selectMulti('q6', this, 3)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q6',3)" ondragend="onDragEnd(event)" onclick="clickToSelect('q6',this,3)">
               <div class="option-emoji">🎭</div>
               <div class="option-text">No clear owner — everyone disagrees on who's responsible</div>
             </div>
@@ -937,15 +1011,15 @@
         <div class="option-group">
           <span class="option-group-label tech">🟢 Technical &amp; Operational</span>
           <div class="options">
-            <div class="option" onclick="selectMulti('q6', this, 3)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q6',3)" ondragend="onDragEnd(event)" onclick="clickToSelect('q6',this,3)">
               <div class="option-emoji">🔧</div>
               <div class="option-text">Integration complexity — legacy systems, APIs, latency</div>
             </div>
-            <div class="option" onclick="selectMulti('q6', this, 3)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q6',3)" ondragend="onDragEnd(event)" onclick="clickToSelect('q6',this,3)">
               <div class="option-emoji">🧪</div>
               <div class="option-text">No quality standard — unclear bar for "production-ready AI"</div>
             </div>
-            <div class="option" onclick="selectMulti('q6', this, 3)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q6',3)" ondragend="onDragEnd(event)" onclick="clickToSelect('q6',this,3)">
               <div class="option-emoji">🏗️</div>
               <div class="option-text">Missing MLOps infrastructure — CI/CD, versioning, rollback</div>
             </div>
@@ -956,11 +1030,11 @@
         <div class="option-group">
           <span class="option-group-label biz">🟡 Business &amp; ROI</span>
           <div class="options">
-            <div class="option" onclick="selectMulti('q6', this, 3)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q6',3)" ondragend="onDragEnd(event)" onclick="clickToSelect('q6',this,3)">
               <div class="option-emoji">💸</div>
               <div class="option-text">Can't justify ROI or total cost of ownership to leadership</div>
             </div>
-            <div class="option" onclick="selectMulti('q6', this, 3)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q6',3)" ondragend="onDragEnd(event)" onclick="clickToSelect('q6',this,3)">
               <div class="option-emoji">📉</div>
               <div class="option-text">Fear of reputational damage if AI fails publicly</div>
             </div>
@@ -1048,29 +1122,34 @@
     <div style="position:relative">
       <div class="big-num">09</div>
       <div class="q-label">Question 9 of 13 · Urgency</div>
-      <div class="q-text">Is a <em>compliance deadline</em> driving your AI decisions right now?</div>
+      <div class="q-text">Which <em>compliance deadlines</em> are driving your AI decisions?</div>
+      <div class="q-sub">Select all that apply.</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="multi-hint" style="margin-bottom:0">✓ Select all that apply</div>
+        <span id="q9-badge" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);transition:color 0.2s;">0 selected</span>
+      </div>
       <div class="options" id="q9">
-        <div class="option" onclick="selectSingle('q9', this)">
+        <div class="option" onclick="selectMulti('q9', this, 99)">
           <div class="option-key">A</div>
           <div class="option-text">Yes — EU AI Act (August 2026 deadline)</div>
         </div>
-        <div class="option" onclick="selectSingle('q9', this)">
+        <div class="option" onclick="selectMulti('q9', this, 99)">
           <div class="option-key">B</div>
           <div class="option-text">Yes — GDPR / data privacy requirements</div>
         </div>
-        <div class="option" onclick="selectSingle('q9', this)">
+        <div class="option" onclick="selectMulti('q9', this, 99)">
           <div class="option-key">C</div>
           <div class="option-text">Yes — industry-specific (HIPAA, PCI-DSS, SOC2, etc.)</div>
         </div>
-        <div class="option" onclick="selectSingle('q9', this)">
+        <div class="option" onclick="selectMulti('q9', this, 99)">
           <div class="option-key">D</div>
           <div class="option-text">Yes — internal governance policy</div>
         </div>
-        <div class="option" onclick="selectSingle('q9', this)">
+        <div class="option" onclick="selectMulti('q9', this, 99)">
           <div class="option-key">E</div>
           <div class="option-text">No — but we should be paying attention</div>
         </div>
-        <div class="option" onclick="selectSingle('q9', this)">
+        <div class="option" onclick="selectMulti('q9', this, 99)">
           <div class="option-key">F</div>
           <div class="option-text">No — compliance isn't on our radar yet</div>
         </div>
@@ -1088,6 +1167,15 @@
       <div class="q-label">Question 10 of 13 · Tools</div>
       <div class="q-text">What are you using <em>today</em> to address AI production risks?</div>
       <div class="q-sub">Select all that apply — even partial or experimental use counts.</div>
+      <div class="selection-tray" id="q10-tray"
+           ondragover="event.preventDefault(); document.getElementById('q10-tray').classList.add('drag-over');"
+           ondragleave="document.getElementById('q10-tray').classList.remove('drag-over');"
+           ondrop="onTrayDrop(event,'q10',99)">
+        <div class="tray-label">✦ Tools you're using — drag or click to select</div>
+        <div class="tray-items" id="q10-tray-items">
+          <span class="tray-empty-hint" id="q10-empty-hint">Drag items here or click below to add</span>
+        </div>
+      </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div class="multi-hint" style="margin-bottom:0">✓ Select all that apply</div>
         <span id="q10-badge" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);transition:color 0.2s;">0 selected</span>
@@ -1097,28 +1185,28 @@
         <!-- Explainability / XAI -->
         <div class="option-group">
           <span class="option-group-label trust">🔵 Explainability &amp; Interpretability</span>
-          <div class="options grid-2">
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+          <div class="options">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">🔍</div>
               <div class="option-text">SHAP (SHapley values)</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">🔍</div>
               <div class="option-text">LIME</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">🔍</div>
               <div class="option-text">Captum (PyTorch)</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">🔍</div>
               <div class="option-text">InterpretML (Microsoft)</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">🔍</div>
               <div class="option-text">What-If Tool (Google)</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">🔍</div>
               <div class="option-text">Fiddler AI</div>
             </div>
@@ -1128,28 +1216,28 @@
         <!-- Model Monitoring -->
         <div class="option-group">
           <span class="option-group-label tech">🟢 Model Monitoring &amp; Observability</span>
-          <div class="options grid-2">
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+          <div class="options">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">📈</div>
               <div class="option-text">Arize AI</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">📈</div>
               <div class="option-text">Evidently AI</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">📈</div>
               <div class="option-text">WhyLabs</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">📈</div>
               <div class="option-text">Datadog ML monitoring</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">📈</div>
               <div class="option-text">Grafana + custom dashboards</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">📈</div>
               <div class="option-text">Weights &amp; Biases (W&amp;B)</div>
             </div>
@@ -1159,28 +1247,28 @@
         <!-- AI Security & Red-teaming -->
         <div class="option-group">
           <span class="option-group-label security">🔴 AI Security &amp; Red-teaming</span>
-          <div class="options grid-2">
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+          <div class="options">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">🛡️</div>
               <div class="option-text">Garak (LLM vulnerability scanner)</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">🛡️</div>
               <div class="option-text">HackAPrompt / PromptBench</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">🛡️</div>
               <div class="option-text">Pyrit (Microsoft)</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">🛡️</div>
               <div class="option-text">Lakera Guard / Guardrails AI</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">🛡️</div>
               <div class="option-text">Rebuff / NeMo Guardrails (NVIDIA)</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">🛡️</div>
               <div class="option-text">External red-team / pen-test engagement</div>
             </div>
@@ -1190,28 +1278,28 @@
         <!-- MLOps & CI/CD -->
         <div class="option-group">
           <span class="option-group-label tech">🟢 MLOps &amp; Deployment Pipelines</span>
-          <div class="options grid-2">
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+          <div class="options">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">⚙️</div>
               <div class="option-text">MLflow</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">⚙️</div>
               <div class="option-text">Kubeflow / KServe</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">⚙️</div>
               <div class="option-text">Metaflow (Netflix)</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">⚙️</div>
               <div class="option-text">BentoML / Seldon</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">⚙️</div>
               <div class="option-text">SageMaker / Vertex AI / Azure ML</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">⚙️</div>
               <div class="option-text">Homegrown CI/CD pipelines</div>
             </div>
@@ -1221,28 +1309,28 @@
         <!-- LLM Evaluation -->
         <div class="option-group">
           <span class="option-group-label" style="border-color:#a78bfa;color:#a78bfa;opacity:0.8;">🟣 LLM Evaluation &amp; Testing</span>
-          <div class="options grid-2">
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+          <div class="options">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">🧪</div>
               <div class="option-text">LangSmith (LangChain)</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">🧪</div>
               <div class="option-text">Promptfoo</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">🧪</div>
               <div class="option-text">Braintrust</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">🧪</div>
               <div class="option-text">Ragas (RAG evaluation)</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">🧪</div>
               <div class="option-text">Eleuther AI lm-evaluation-harness</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">🧪</div>
               <div class="option-text">Deepeval</div>
             </div>
@@ -1252,28 +1340,28 @@
         <!-- Governance & Compliance -->
         <div class="option-group">
           <span class="option-group-label" style="border-color:#f59e0b;color:#f59e0b;opacity:0.8;">🟡 Governance &amp; Compliance</span>
-          <div class="options grid-2">
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+          <div class="options">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">📁</div>
               <div class="option-text">Internal AI policy docs / risk registers</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">📁</div>
               <div class="option-text">NIST AI RMF framework</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">📁</div>
               <div class="option-text">ISO 42001 (AI management)</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">📁</div>
               <div class="option-text">OneTrust AI Governance</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">📁</div>
               <div class="option-text">Credo AI</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">📁</div>
               <div class="option-text">Manual audits / third-party assessments</div>
             </div>
@@ -1283,12 +1371,12 @@
         <!-- Nothing -->
         <div class="option-group">
           <span class="option-group-label" style="border-color:var(--muted);color:var(--muted);">⬜ None of the above</span>
-          <div class="options grid-2">
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+          <div class="options">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">🚫</div>
               <div class="option-text">Nothing formal yet — we're winging it</div>
             </div>
-            <div class="option" onclick="selectMulti('q10', this, 99)">
+            <div class="option" draggable="true" ondragstart="onDragStart(event,'q10',99)" ondragend="onDragEnd(event)" onclick="clickToSelect('q10',this,99)">
               <div class="option-emoji">🤷</div>
               <div class="option-text">Not sure what my org uses</div>
             </div>
@@ -1380,33 +1468,55 @@
       <div class="big-num">13</div>
       <div class="q-label">Question 13 of 13 · The Real Story</div>
       <div class="q-text">Describe the last AI project that <em>got stuck</em> before production.</div>
-      <div class="q-sub">What happened? What killed it? What would it have taken to ship? (Be as specific as you're comfortable with — this is anonymous.)</div>
-      <textarea class="text-input" id="q13" placeholder="It was a fraud detection model. We had 94% accuracy but legal said they couldn't sign off because we couldn't explain individual decisions to customers who got denied..." rows="5"></textarea>
+      <div class="q-sub">What happened? What killed it? What would it have taken to ship? Be as specific as you're comfortable.</div>
+      <textarea class="text-input" id="q13" placeholder="It was a fraud detection model. We had 94% accuracy but legal said they couldn't sign off because we couldn't explain individual decisions to customers who got denied..." rows="5" oninput="this.style.borderColor=''"></textarea>
+      <button class="btn-next" onclick="nextSlide()" style="margin-top:16px;">
+        Next
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+      </button>
+      <span class="hint-text"><kbd>Ctrl + Enter</kbd> to continue</span>
+    </div>
+  </div>
+
+  <!-- SLIDE 14: Name + Email (mandatory) -->
+  <div class="slide" id="slide-14">
+    <div style="position:relative">
+      <div class="big-num">14</div>
+      <div class="q-label">Last Step · Your Details</div>
+      <div class="q-text">Almost done — <em>who are you?</em></div>
+      <div class="q-sub">Your response will be attributed to you and kept confidential — used for research purposes only.</div>
+      <div class="input-group">
+        <label class="input-label" for="name-input">Full name *</label>
+        <input type="text" id="name-input" class="text-input" placeholder="Jane Smith"
+               oninput="this.style.borderColor=''"
+               style="max-width:420px; display:block;">
+      </div>
+      <div class="input-group">
+        <label class="input-label" for="email-input">Work email *</label>
+        <input type="email" id="email-input" class="text-input" placeholder="you@company.com"
+               oninput="this.style.borderColor=''"
+               style="max-width:420px; display:block; font-family:'DM Mono',monospace; font-size:18px;">
+      </div>
       <button class="btn-next" onclick="nextSlide()">
         Submit Survey
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
       </button>
-      <span class="hint-text"><kbd>Ctrl + Enter</kbd> to submit</span>
+      <span class="hint-text"><kbd>Enter ↵</kbd> to submit</span>
     </div>
   </div>
 
-  <!-- THANK YOU -->
-  <div class="slide" id="slide-14">
+  <!-- THANK YOU (slide 15) -->
+  <div class="slide" id="slide-15">
     <div>
       <div class="thankyou-icon">✦</div>
       <div class="thankyou-title">You're awesome.</div>
       <div class="thankyou-body">
         Your responses will help us understand the real cost of AI stuck in limbo — and build tools that actually fix it.<br><br>
-        We'll publish the full <strong style="color:var(--text)">2025 State of AI Production Readiness</strong> report when we hit 200 responses. Drop your email to get it first.
-      </div>
-      <div style="margin-bottom: 24px;">
-        <input type="text" id="email-input" class="text-input" placeholder="your@email.com" style="max-width: 400px; font-family: 'DM Mono', monospace; font-size: 16px;">
-        <div style="margin-top: 6px; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.1em;">No spam. Just the report when it drops.</div>
+        We'll publish the full <strong style="color:var(--text)">2025 State of AI Production Readiness</strong> report when we hit 200 responses. We'll email you when it drops.
       </div>
       <div class="share-row">
         <button class="share-btn primary" onclick="copyLink()">📋 Copy Survey Link</button>
         <button class="share-btn secondary" onclick="shareLinkedIn()">Share on LinkedIn</button>
-        <button class="share-btn secondary" id="report-btn" onclick="submitEmail()">Get the Report</button>
       </div>
       <div id="response-counter" style="margin-top:28px; font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); letter-spacing:0.1em;"></div>
       <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border);">
@@ -1425,24 +1535,32 @@
   <button class="arrow-btn" id="btnNext2" onclick="nextSlide()">↓</button>
 </div>
 
+<!-- Global error toast -->
+<div id="error-toast" style="position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(10px);background:rgba(255,107,71,0.95);color:#fff;padding:8px 20px;border-radius:20px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.08em;opacity:0;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);z-index:300;pointer-events:none;white-space:nowrap;">
+  Please make a selection to continue
+</div>
+
 <script>
   let current = 0;
-  const total = 14; // 0 = welcome, 1-13 = questions, 14 = thankyou
+  const total = 15; // 0=welcome, 1-13=questions, 14=name/email, 15=thankyou
   const answers = {};
 
+  // ── Progress & nav ────────────────────────────────────────────────────────
   function updateProgress() {
-    const pct = current === 0 ? 0 : (current / 13) * 100;
+    const pct = current === 0 ? 0 : Math.min((current / 14) * 100, 100);
     document.getElementById('progressFill').style.width = pct + '%';
     const counter = document.getElementById('navCounter');
     if (current === 0) {
       counter.innerHTML = '<span>0</span> / 13';
     } else if (current === 14) {
+      counter.innerHTML = '<span style="color:var(--accent2)">Last step</span>';
+    } else if (current === 15) {
       counter.innerHTML = '<span>✓</span> Complete';
     } else {
       counter.innerHTML = `<span>${current}</span> / 13`;
     }
     const arrows = document.getElementById('navArrows');
-    arrows.style.display = (current > 0 && current < 14) ? 'flex' : 'none';
+    arrows.style.display = (current > 0 && current < 15) ? 'flex' : 'none';
     document.getElementById('btnPrev').disabled = current <= 1;
   }
 
@@ -1455,21 +1573,23 @@
       const next = document.getElementById('slide-' + current);
       next.classList.add('active');
       updateProgress();
-      // Thank-you message (no live count needed with Apps Script)
-      if (current === 14) {
+      if (current === 15) {
         const el = document.getElementById('response-counter');
         if (el) el.textContent = 'Response saved — thank you!';
       }
     }, 300);
   }
 
-  // ── API base URL ──────────────────────────────────────────────────────────
+  // ── API ───────────────────────────────────────────────────────────────────
   const API_BASE = 'https://ai-deployment-survey.vercel.app';
 
-  // ── Survey submit ─────────────────────────────────────────────────────────
   async function submitSurvey() {
     const ta = document.getElementById('q13');
     if (ta && ta.value.trim()) answers['q13'] = ta.value.trim();
+    const nameEl = document.getElementById('name-input');
+    const emailEl = document.getElementById('email-input');
+    if (nameEl) answers['name'] = nameEl.value.trim();
+    if (emailEl) answers['email'] = emailEl.value.trim();
     try {
       const r = await fetch(`${API_BASE}/api/submit`, {
         method: 'POST',
@@ -1482,37 +1602,65 @@
     } catch(e) { console.error('Save failed:', e); }
   }
 
-  // ── Email opt-in ──────────────────────────────────────────────────────────
-  async function submitEmail() {
-    const emailInput = document.getElementById('email-input');
-    const email = emailInput ? emailInput.value.trim() : '';
-    if (!email || !email.includes('@')) {
-      if (emailInput) emailInput.style.borderColor = 'var(--accent2)';
-      return;
+  // ── Mandatory validation ──────────────────────────────────────────────────
+  function hasAnswer(slideNum) {
+    if (slideNum === 0 || slideNum === 15) return true;
+    if (slideNum === 13) {
+      const ta = document.getElementById('q13');
+      const ok = ta && ta.value.trim().length > 0;
+      if (!ok && ta) ta.style.borderColor = 'var(--accent2)';
+      return ok;
     }
-    const btn = document.getElementById('report-btn');
-    if (btn) btn.textContent = 'Added to list ✓';
-    try {
-      await fetch(`${API_BASE}/api/email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-    } catch { /* silently ignore */ }
+    if (slideNum === 14) {
+      const nameEl = document.getElementById('name-input');
+      const emailEl = document.getElementById('email-input');
+      const nameOk = nameEl && nameEl.value.trim().length > 0;
+      const emailOk = emailEl && emailEl.value.trim().length > 0 && emailEl.value.includes('@');
+      if (!nameOk && nameEl) nameEl.style.borderColor = 'var(--accent2)';
+      if (!emailOk && emailEl) emailEl.style.borderColor = 'var(--accent2)';
+      return nameOk && emailOk;
+    }
+    const qId = 'q' + slideNum;
+    const val = answers[qId];
+    if (Array.isArray(val)) return val.length > 0;
+    return val !== undefined && val !== '';
+  }
+
+  function showError(msg) {
+    const toast = document.getElementById('error-toast');
+    toast.textContent = msg || 'Please make a selection to continue';
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateX(-50%) translateY(0)';
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(-50%) translateY(10px)';
+    }, 2200);
+    const btn = document.querySelector('#slide-' + current + ' .btn-next');
+    if (btn) {
+      btn.classList.remove('btn-shake');
+      void btn.offsetWidth;
+      btn.classList.add('btn-shake');
+      setTimeout(() => btn.classList.remove('btn-shake'), 400);
+    }
   }
 
   function nextSlide() {
-    if (current === 13) {
-      submitSurvey(); // fire-and-forget; don't block transition
+    if (!hasAnswer(current)) {
+      let msg = 'Please make a selection to continue';
+      if (current === 13) msg = 'Please describe your experience to continue';
+      if (current === 14) msg = 'Please fill in your name and a valid email';
+      showError(msg);
+      return;
     }
+    if (current === 14) submitSurvey();
     if (current < total) goToSlide(current + 1);
   }
 
   function prevSlide() {
-    if (current > 1) goToSlide(current - 1);
+    if (current > 1 && current < 15) goToSlide(current - 1);
   }
 
-  // Single select
+  // ── Single select (auto-advance) ──────────────────────────────────────────
   function selectSingle(groupId, el) {
     const group = document.getElementById(groupId);
     group.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
@@ -1521,7 +1669,7 @@
     setTimeout(() => nextSlide(), 350);
   }
 
-  // Multi select — with live count feedback
+  // ── Multi select (click toggle, badge counter) ────────────────────────────
   function selectMulti(groupId, el, max) {
     const group = document.getElementById(groupId);
     const selected = group.querySelectorAll('.option.selected');
@@ -1531,33 +1679,129 @@
       if (selected.length < max) {
         el.classList.add('selected');
       } else {
-        // shake effect
         el.style.transform = 'translateX(-4px)';
         setTimeout(() => el.style.transform = '', 150);
       }
     }
     answers[groupId] = [...group.querySelectorAll('.option.selected')].map(o => o.querySelector('.option-text').textContent);
-    // Update badge
     const badge = document.getElementById(groupId + '-badge');
     if (badge) {
       const count = group.querySelectorAll('.option.selected').length;
-      badge.textContent = max < 99
-        ? `${count} / ${max} selected`
-        : `${count} selected`;
+      badge.textContent = max < 99 ? `${count} / ${max} selected` : `${count} selected`;
       badge.style.color = count > 0 ? 'var(--accent)' : 'var(--muted)';
     }
   }
 
-  // Chip select (single)
+  // ── Drag-and-drop + click select (Q6, Q10) ────────────────────────────────
+  function clickToSelect(groupId, el, max) {
+    const trayItems = document.getElementById(groupId + '-tray-items');
+    const text = el.querySelector('.option-text').textContent.trim();
+    const emojiEl = el.querySelector('.option-emoji');
+    const emoji = emojiEl ? emojiEl.textContent.trim() : '';
+
+    if (el.classList.contains('selected')) {
+      el.classList.remove('selected');
+      if (trayItems) {
+        [...trayItems.querySelectorAll('.tray-tag')].forEach(t => {
+          if (t.dataset.value === text) t.remove();
+        });
+      }
+    } else {
+      const group = document.getElementById(groupId);
+      const currentCount = group.querySelectorAll('.option.selected').length;
+      if (max && max < 99 && currentCount >= max) {
+        el.style.transform = 'translateX(-4px)';
+        setTimeout(() => el.style.transform = '', 150);
+        return;
+      }
+      el.classList.add('selected');
+      if (trayItems) {
+        const tag = document.createElement('div');
+        tag.className = 'tray-tag';
+        tag.dataset.value = text;
+        const textSpan = document.createElement('span');
+        textSpan.className = 'tray-tag-text';
+        textSpan.title = text;
+        textSpan.textContent = (emoji ? emoji + ' ' : '') + text;
+        const removeBtn = document.createElement('span');
+        removeBtn.className = 'tray-tag-remove';
+        removeBtn.textContent = '×';
+        removeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          tag.remove();
+          el.classList.remove('selected');
+          syncDragAnswers(groupId, max);
+          updateTrayHint(groupId);
+        });
+        tag.appendChild(textSpan);
+        tag.appendChild(removeBtn);
+        trayItems.appendChild(tag);
+      }
+    }
+    syncDragAnswers(groupId, max);
+    updateTrayHint(groupId);
+  }
+
+  function syncDragAnswers(groupId, max) {
+    const group = document.getElementById(groupId);
+    answers[groupId] = [...group.querySelectorAll('.option.selected')]
+      .map(o => o.querySelector('.option-text').textContent.trim());
+    const badge = document.getElementById(groupId + '-badge');
+    if (badge) {
+      const count = answers[groupId].length;
+      badge.textContent = max && max < 99 ? `${count} / ${max} selected` : `${count} selected`;
+      badge.style.color = count > 0 ? 'var(--accent)' : 'var(--muted)';
+    }
+  }
+
+  function updateTrayHint(groupId) {
+    const trayItems = document.getElementById(groupId + '-tray-items');
+    const hint = document.getElementById(groupId + '-empty-hint');
+    if (hint && trayItems) {
+      hint.style.display = trayItems.querySelectorAll('.tray-tag').length > 0 ? 'none' : '';
+    }
+  }
+
+  function onDragStart(e, groupId, max) {
+    const el = e.currentTarget;
+    const text = el.querySelector('.option-text').textContent.trim();
+    const emojiEl = el.querySelector('.option-emoji');
+    const emoji = emojiEl ? emojiEl.textContent.trim() : '';
+    e.dataTransfer.setData('text/plain', JSON.stringify({ groupId, text, emoji, max }));
+    setTimeout(() => { el.style.opacity = '0.4'; }, 0);
+  }
+
+  function onDragEnd(e) {
+    e.currentTarget.style.opacity = '';
+  }
+
+  function onTrayDrop(e, groupId, max) {
+    e.preventDefault();
+    const tray = document.getElementById(groupId + '-tray');
+    if (tray) tray.classList.remove('drag-over');
+    try {
+      const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+      if (data.groupId !== groupId) return;
+      const group = document.getElementById(groupId);
+      const option = [...group.querySelectorAll('.option')].find(o =>
+        o.querySelector('.option-text').textContent.trim() === data.text
+      );
+      if (option && !option.classList.contains('selected')) {
+        clickToSelect(groupId, option, max);
+      }
+    } catch {}
+  }
+
+  // ── Chip select (single, auto-advance) ────────────────────────────────────
   function selectChip(groupId, el) {
     const group = document.getElementById(groupId);
     group.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
-    answers[groupId] = el.textContent;
+    answers[groupId] = el.textContent.trim();
     setTimeout(() => nextSlide(), 350);
   }
 
-  // Scale
+  // ── Scale (auto-advance) ──────────────────────────────────────────────────
   function selectScale(groupId, el) {
     const group = document.getElementById(groupId);
     group.querySelectorAll('.scale-option').forEach(s => s.classList.remove('selected'));
@@ -1566,25 +1810,24 @@
     setTimeout(() => nextSlide(), 350);
   }
 
-  // Keyboard navigation
+  // ── Keyboard navigation ───────────────────────────────────────────────────
   document.addEventListener('keydown', (e) => {
     if (current === 13) {
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) nextSlide();
       return;
     }
-    if (e.key === 'Enter') {
-      nextSlide();
+    if (current === 14) {
+      if (e.key === 'Enter') { e.preventDefault(); nextSlide(); }
+      return;
     }
+    if (e.key === 'Enter') nextSlide();
     if (e.key === 'ArrowDown' || e.key === 'Tab') {
       e.preventDefault();
-      if (current > 0 && current < 14) nextSlide();
+      if (current > 0 && current < 15) nextSlide();
     }
-    if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      prevSlide();
-    }
-    // Letter key shortcuts for option lists
-    if (current >= 2 && current <= 5 || current === 7 || current === 9 || current === 11 || current === 12) {
+    if (e.key === 'ArrowUp') { e.preventDefault(); prevSlide(); }
+    // Letter shortcuts for single-select option slides (excludes Q9 — now multi)
+    if ([2, 3, 4, 5, 7, 11, 12].includes(current)) {
       const keys = ['a','b','c','d','e','f'];
       const idx = keys.indexOf(e.key.toLowerCase());
       if (idx >= 0) {
@@ -1598,9 +1841,7 @@
   });
 
   function copyLink() {
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      alert('Link copied!');
-    });
+    navigator.clipboard.writeText(window.location.href).then(() => { alert('Link copied!'); });
   }
 
   function shareLinkedIn() {
