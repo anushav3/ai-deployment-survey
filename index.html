@@ -1646,7 +1646,8 @@
     if (slideNum === 14) {
       const emailEl = document.getElementById('email-input');
       const val = emailEl ? emailEl.value.trim() : '';
-      const validFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+      // Accept valid work emails: local@domain.tld with TLD 2+ letters (.com, .org, .co, .uk, .io, etc.)
+      const validFormat = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(val);
       const PERSONAL_DOMAINS = new Set([
         'gmail.com','googlemail.com',
         'yahoo.com','yahoo.co.uk','yahoo.fr','yahoo.ca','yahoo.com.au','ymail.com',
