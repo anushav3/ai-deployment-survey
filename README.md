@@ -7,10 +7,8 @@ Survey responses are stored in Vercel Blob and can be downloaded as a CSV at any
 The export endpoint requires a secret token set in Vercel environment variables.
 
 ```bash
-curl -s "https://ai-deployment-survey.vercel.app/api/export?token=YOUR_EXPORT_TOKEN" -o survey-responses.csv
+curl -s "https://ai-deployment-survey.vercel.app/api/export?token=ae06c1a4c0b1d7107f560e21ffe0f9bc6b9ee90c44510b87bb3c5deeffa9cdb5" -o survey-responses.csv
 ```
-
-Replace `YOUR_EXPORT_TOKEN` with the value of the `EXPORT_TOKEN` environment variable set in the Vercel dashboard.
 
 This will overwrite `survey-responses.csv` in the current folder with all responses to date.
 

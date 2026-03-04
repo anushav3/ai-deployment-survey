@@ -1513,6 +1513,12 @@
                style="max-width:420px; display:block;">
       </div>
       <div class="input-group">
+        <label class="input-label" for="company-input">Company <span style="color:var(--muted);font-size:0.8em">(optional)</span></label>
+        <input type="text" id="company-input" class="text-input" placeholder="Acme Corp"
+               oninput="this.style.borderColor=''"
+               style="max-width:420px; display:block;">
+      </div>
+      <div class="input-group">
         <label class="input-label" for="email-input">Work email *</label>
         <input type="email" id="email-input" class="text-input" placeholder="you@company.com"
                oninput="this.style.borderColor=''"
@@ -1608,8 +1614,10 @@
     const ta = document.getElementById('q13');
     if (ta && ta.value.trim()) answers['q13'] = ta.value.trim();
     const nameEl = document.getElementById('name-input');
+    const companyEl = document.getElementById('company-input');
     const emailEl = document.getElementById('email-input');
     if (nameEl) answers['name'] = nameEl.value.trim();
+    if (companyEl) answers['company'] = companyEl.value.trim();
     if (emailEl) answers['email'] = emailEl.value.trim();
     try {
       const r = await fetch(`${API_BASE}/api/submit`, {
@@ -1634,7 +1642,7 @@
     }
     if (slideNum === 14) {
       const emailEl = document.getElementById('email-input');
-      const emailOk = emailEl && emailEl.value.trim().length > 0 && emailEl.value.includes('@');
+      const emailOk = emailEl && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailEl.value.trim());
       if (!emailOk && emailEl) emailEl.style.borderColor = 'var(--accent2)';
       return emailOk;
     }

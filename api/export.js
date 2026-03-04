@@ -1,7 +1,7 @@
 const { list } = require('@vercel/blob');
 
 const HEADERS = [
-  'id', 'timestamp', 'name', 'email',
+  'id', 'timestamp', 'name', 'company', 'email',
   'q1_role', 'q2_company_size', 'q3_industry', 'q4_ai_journey',
   'q5_projects_stuck',
   'q6_blocker_1', 'q6_blocker_2', 'q6_blocker_3',
@@ -72,6 +72,7 @@ module.exports = async function handler(req, res) {
         id:                      entry.id,
         timestamp:               friendlyTimestamp(entry.timestamp),
         name:                    a.name,
+        company:                 a.company,
         email:                   a.email,
         q1_role:                 a.q1,
         q2_company_size:         a.q2,
